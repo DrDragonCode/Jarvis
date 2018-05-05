@@ -8,9 +8,7 @@ from threading import Timer
 from .fileHandler import write_file, read_file, str2date
 from utilities.lexicalSimilarity import score_sentence, compare_sentence
 from utilities.textParser import parse_number, parse_date
-from utilities.GeneralUtilities import (
-    error, info, MACOS, IS_MACOS, unsupported
-)
+from utilities.GeneralUtilities import (error, info, MACOS, IS_MACOS, unsupported)
 
 if not IS_MACOS:
     import notify2
@@ -89,9 +87,7 @@ def removeReminder(uuid):
             break
     write_file("reminderlist.txt", reminderList)
 
-
 actions = {}
-
 
 def addAction(function, trigger=[], minArgs=0):
     """
@@ -103,21 +99,19 @@ def addAction(function, trigger=[], minArgs=0):
     """
     actions[function] = {'trigger': trigger, 'minArgs': minArgs}
 
-
 addAction("handlerAdd", ["add", "new", "create"], minArgs=1)
 
 
-def handler_add(data):
+def handlerAdd(data):
     skip, time = parse_date(data)
     if skip:
         addReminder(
             name=" ".join(data.split()[skip:]), time=time, hidden=False, uuid=uuid4().hex)
 
-
 addAction("handlerRemove", ["remove", "delete", "destroy"], minArgs=1)
 
 
-def handler_remove(data):
+def handlerRemove(data):
     skip, number = parse_number(data)
     if skip:
         index = number - 1
@@ -134,7 +128,7 @@ def handler_remove(data):
 addAction("handlerList", ["list", "print", "show"])
 
 
-def handler_list(data):
+def handlerList(data):
     count = 0
     for index, en in enumerate(reminderList['items']):
         if not en['hidden']:
@@ -147,7 +141,7 @@ def handler_list(data):
 addAction("handlerClear", ["clear"])
 
 
-def handler_clear(data):
+def handlerClear(data):
     reminderList['items'] = [k for k in reminderList['items'] if k['hidden']]
     write_file("reminderlist.txt", reminderList)
 
@@ -165,7 +159,8 @@ def reminder_handler(data):
     for key in actions:
         found_match = False
         for trigger in actions[key]['trigger']:
-            new_score, index_list = score_sentence(data, trigger, distance_penalty=0.5, additional_target_penalty=0,
+            new_score, index_list = score_sentence(data, trigger, distance_penalty=0.5,
+	    additional_target_penalty=0,
                                                    word_match_penalty=0.5)
             if found_match and len(index_list) > len(indices):
                 # A match for this action was already found.
@@ -185,10 +180,9 @@ def reminder_handler(data):
         del data[j]
     if len(data) < min_args:
         error("Not enough arguments for specified command {0}".format(action))
-        return
+        return 
     data = " ".join(data)
     globals()[action](data)
-
 
 @unsupported(platform=MACOS, silent=True)
 def reminder_quit():
