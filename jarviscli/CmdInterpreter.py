@@ -2,7 +2,6 @@ from os import system
 from cmd import Cmd
 import signal
 import six
-from six.moves import input
 from platform import system as sys
 from platform import architecture, release, dist
 from time import ctime
@@ -15,10 +14,9 @@ from utilities.GeneralUtilities import (
 )
 
 from packages.lyrics import lyrics
-from packages.music import play
 from packages.todo import todoHandler
-from packages.reminder import reminder_handler, reminder_quit
-from packages import mapps, picshow, evaluator, forecast, wiki, movie, ip
+from packages.reminder import reminder_handler, reminder_quit, addAction, removeReminder, addReminder 
+from packages import mapps, picshow, evaluator, forecast, wiki, movie, search, music
 from packages import directions_to, near_me, weather_pinpoint, chuck, weatherIn, timeIn
 from packages.memory.memory import Memory
 from packages.shutdown import shutdown_system, cancel_shutdown, reboot_system
@@ -33,8 +31,7 @@ from packages.quote import show_quote
 from packages.hackathon import find_hackathon
 from packages import translate
 from packages.dictionary import dictionary
-from packages.tempconv import temp_main
-from packages.dice import dice
+import webbrowser
 if six.PY2:
     from packages import chat
 MEMORY = Memory()
@@ -71,23 +68,22 @@ class CmdInterpreter(Cmd):
                         "clock",
                         "cricket",
                         {"decrease": ("volume",)},
-                        "roll",
                         "dictionary",
                         "directions",
                         {"disable": ("sound",)},
-                        {"display": ("pics",)},
+                        {"display": ("pics","search")},
                         {"enable": ("sound",)},
                         "evaluate",
                         "exit",
                         "file_organise",
                         "fb",
                         "goodbye",
+			"google" ,
                         "hackathon",
                         "help",
                         {"hotspot": ("start", "stop")},
                         "how_are_you",
                         {"increase": ("volume",)},
-                        "ip",
                         "lyrics",
                         "match",
                         {"movie": ("cast", "director", "plot", "producer", "rating", "year",)},
@@ -103,15 +99,12 @@ class CmdInterpreter(Cmd):
                         "q",
                         "quit",
                         "quote",
+			"radio",
                         "reboot",
                         "remind",
                         "say",
                         {"screen": ("off",)},
-                        "shutdown",
-                        "stopwatch",
-                        "systeminfo",
-                        "tempconv",
-                        "timer",
+			"shutdown",
                         "todo",
                         {"tell": ("joke",)},
                         "translate",
@@ -176,8 +169,13 @@ class CmdInterpreter(Cmd):
     def help_calculate(self):
         """Print help about calculate command."""
         print_say("Jarvis will get your calculations done!", self)
-        print_say("-- Example:", self)
-        print_say("\tcalculate 3 + 5", self)
+        print_say("Do you want to see all commands?", self)
+        if six.PY2:
+	    i = raw_input()
+	else :
+	    i = input()
+	if i == 'Yes' or i == 'Y':
+	    webbrowser.open("https://docs.python.org/2/library/math.html")
 
     def do_cancel(self, s):
         """Cancel an active shutdown."""
@@ -262,21 +260,8 @@ class CmdInterpreter(Cmd):
         """cricket package for Jarvis"""
         print_say("Enter cricket and follow the instructions", self)
 
-    def do_roll(self, s=None):
-        """Roll a dice"""
-        dice(self, s)
-
-    def help_roll(self):
-        """Prints help about dice command"""
-        print_say("Roll a dice. E.g.", self)
-        print_say("-- Examples:", self)
-        print_say("\tRoll a dice", self)
-        print_say("\tRoll four dices with 16 edges", self)
-        print_say("\tRoll 5 dices five times", self)
-
     def do_decrease(self, s):
         """Decreases you speakers' sound."""
-        # TODO si solo ponemos decrease que pase algo
         if s == "volume":
             if IS_MACOS:
                 system(
@@ -288,7 +273,7 @@ class CmdInterpreter(Cmd):
 
     def help_decrease(self):
         """Print help about decrease command."""
-        print_say("volume: Decreases your speaker's sound.", self)
+        print_say("volume: Decreases you speaker's sound.", self)
 
     def complete_decrease(self, text, line, begidx, endidx):
         """Completions for decrease command"""
@@ -335,16 +320,31 @@ class CmdInterpreter(Cmd):
         if "pics" in s:
             s = s.replace("pics", "").strip()
             picshow.showpics(s)
+	if "search" in s:
+	    s = s.replace("search", "").strip()
+	    search.urlsearch(s, self)
 
     def help_display(self):
         """Prints help about display command"""
-        print_say("Displays photos of the topic you choose.", self)
+        print_say("Displays photos or search results of the topic you choose.", self)
         print_say("-- Example:", self)
         print_say("\tdisplay pics of castles", self)
+	print_say("\tdisplay search for castles", self)
 
     def complete_display(self, text, line, begidx, endidx):
         """Completions for display command"""
         return self.get_completions("display", text)
+
+    def help_google(self):
+	"""Prints help about the search command"""
+	print_say("Gives you a google search for the topic you choose", self)
+	print_say("--Example:", self)
+	print_say("\tsearch for cats", self)
+
+    def do_google(self, s):
+	if "search" in s:
+		s = s.replace("search", "").strip()
+		search.showsearch(s)
 
     def do_enable(self, s):
         """Let Jarvis use his voice."""
@@ -370,9 +370,13 @@ class CmdInterpreter(Cmd):
     def help_evaluate(self):
         """Print help about evaluate command."""
         print_say("Jarvis will get your calculations done!", self)
-        print_say("-- Example:", self)
-        print_say("\tevaluate 3 + 5", self)
-
+        print_say("Do you want to see all commands?", self)
+        if six.PY2:
+	    i = raw_input()
+	else :
+	    i = input()
+	if i == 'Yes' or i == 'Y':
+	    webbrowser.open("https://docs.python.org/2/library/math.html")
     def do_exit(self, s=None):
         """Closing Jarvis."""
         self.close()
@@ -391,7 +395,7 @@ class CmdInterpreter(Cmd):
         print_say("It organises selected folder based on extension", self)
 
     def do_fb(self, s=None):
-        """Jarvis will login into your facebook account either by prompting id-password or by using previously saved"""
+        """Jarvis will login into your facebook account either by prompting id-password or by using 		previously saved"""
         try:
             fb_login(self)
         except ConnectionError:
@@ -462,16 +466,6 @@ class CmdInterpreter(Cmd):
         """Completions for increase command"""
         return self.get_completions("increase", text)
 
-    def do_ip(self, s):
-        """Display local and public ip address"""
-        ip.get_local_ip(self)
-        print_say("", self)
-        ip.get_public_ip(self)
-
-    def help_ip(self):
-        """Print help about ip command"""
-        print_say("Display local and public ip address", self)
-
     def do_lyrics(self, s):
         # TODO: maybe add option to download lyrics not just print them there
         lyr = lyrics()
@@ -488,8 +482,12 @@ class CmdInterpreter(Cmd):
 
     def do_match(self, s):
         """Matches patterns in a string by using regex."""
-        file_name = input(Fore.RED + "Enter file name?:\n" + Fore.RESET)
-        pattern = input(Fore.GREEN + "Enter string:\n" + Fore.RESET)
+        if six.PY2:
+            file_name = raw_input(Fore.RED + "Enter file name?:\n" + Fore.RESET)
+            pattern = raw_input(Fore.GREEN + "Enter string:\n" + Fore.RESET)
+        else:
+            file_name = input(Fore.RED + "Enter file name?:\n" + Fore.RESET)
+            pattern = input(Fore.GREEN + "Enter string:\n" + Fore.RESET)
         file_name = file_name.strip()
         if file_name == "":
             print("Invalid Filename")
@@ -540,8 +538,12 @@ class CmdInterpreter(Cmd):
     @unsupported(platform=MACOS)
     def do_movies(self, s):
         """Jarvis will find a good movie for you."""
-        movie_name = input(
-            Fore.RED + "What do you want to watch?\n" + Fore.RESET)
+        if six.PY2:
+            movie_name = raw_input(
+                Fore.RED + "What do you want to watch?\n" + Fore.RESET)
+        else:
+            movie_name = input(
+                Fore.RED + "What do you want to watch?\n" + Fore.RESET)
         system("ims " + movie_name)
 
     @unsupported(platform=MACOS)
@@ -552,7 +554,13 @@ class CmdInterpreter(Cmd):
     @unsupported(platform=MACOS)
     def do_music(self, s):
         """Jarvis will find you a good song to relax!"""
-        play(s)
+        music.play(s)
+
+    def do_radio(self, s):
+	music.radio(s, self, MEMORY)
+
+    def help_radio(self):
+	print_say("Jarvis will open any radio channel you want.", self)
 
     @unsupported(platform=MACOS)
     def help_music(self):
@@ -560,17 +568,6 @@ class CmdInterpreter(Cmd):
         print_say("Jarvis will find you the song you want", self)
         print_say("-- Example:", self)
         print_say("\tmusic wonderful tonight", self)
-
-    def do_mute(self, s):
-        """Silences your speaker's sound."""
-        if IS_MACOS:
-            pass
-        else:
-            system("pactl -- set-sink-mute 0 toggle")
-
-    def help_mute(self):
-        """Print help about mute command."""
-        print_say("mute: Silences your speaker's sound.", self)
 
     def do_near(self, data):
         """Jarvis can find what is near you!"""
@@ -741,30 +738,6 @@ class CmdInterpreter(Cmd):
         """Print help about shutdown command."""
         print_say("Shutdown the system.", self)
 
-    def do_stopwatch(self, s):
-        """Start stopwatch"""
-        system("termdown")
-
-    def help_stopwatch(self):
-        """Print help about stopwatch command"""
-        stopwatch_hotkeys = """Hotkeys:
-        L       Lap
-        R       Reset
-        SPACE   Pause
-        Q       Quit
-        """
-        print_say("Start stopwatch", self)
-        print_say("", self)
-        print_say(stopwatch_hotkeys, self)
-
-    def do_systeminfo(self, s):
-        """Display system information with distribution logo"""
-        system("screenfetch")
-
-    def help_systeminfo(self):
-        """"Print help about systeminfo command"""
-        print_say("Display system information with distribution logo", self)
-
     def do_tell(self, s):
         """Tell a joke about Chuck Norris"""
         chuck.main(self)
@@ -772,40 +745,6 @@ class CmdInterpreter(Cmd):
     def help_tell(self):
         """Print info about tell command"""
         print_say("Tell a joke about Chuck Norris", self)
-
-    def do_tempconv(self, s):
-        """Convert temperature from Celsius to Fahrenheit or vice versa"""
-        temp_main(self, s)
-
-    def help_tempconv(self):
-        """Print help information for tempconv command."""
-        print_say("Convert temperature from Fahrenheit to Celsius and vice versa", self)
-        print_say("Examples: 32f, 18C, -20F, -8c, 105.4F, -10.21C", self)
-
-    def do_timer(self, s):
-        """Set a timer"""
-        k = s.split(' ', 1)
-        if k[0] == '':
-            print_say("Please specify duration", self)
-            return
-        timer_cmd = "termdown " + k[0]
-        system(timer_cmd)
-
-    def help_timer(self):
-        """Print help about timer command"""
-        timer_hotkeys = """Hotkeys:
-        R       Reset
-        SPACE   Pause
-        Q       Quit
-        """
-        timer_usages = """Usages:
-        timer 10
-        timer 1h5m30s
-        """
-        print_say("Set a timer", self)
-        print_say("", self)
-        print_say(timer_hotkeys, self)
-        print_say(timer_usages, self)
 
     def do_todo(self, data):
         """Create your personal TODO list!"""
@@ -831,7 +770,8 @@ class CmdInterpreter(Cmd):
         print_say("translates from one language to another.", self)
 
     def do_twitter(self, s):
-        """Jarvis will login into your facebook account either by prompting id-password or by using previously saved"""
+        """Jarvis will login into your facebook account either by prompting id-password or by using
+	   previously saved"""
         if "login" in s:
             try:
                 driver = twitter_login(self)
@@ -870,7 +810,10 @@ class CmdInterpreter(Cmd):
             loc_str = str(location)
             print_say("Your current location is set to " + loc_str, self)
             print_say("What is your new location?", self)
-            i = input()
+            if six.PY2:
+                i = raw_input()
+            else:
+                i = input()
             MEMORY.update_data('city', i)
             MEMORY.save()
         elif "system" in s:
@@ -921,3 +864,14 @@ class CmdInterpreter(Cmd):
         print_say("enter wiki search for searching related topics", self)
         print_say("enter wiki summary for getting summary of the topic", self)
         print_say("wiki content for full page article of topic", self)
+
+    def do_mute(self, s):
+        """Silences your speaker's sound."""
+        if IS_MACOS:
+            pass
+        else:
+            system("pactl -- set-sink-mute 0 toggle")
+
+    def help_mute(self):
+        """Print help about mute command."""
+        print_say("mute: Silences your speaker's sound.", self)
